@@ -19,3 +19,7 @@ The opening camera push is scroll-linked over one pinned section, with a cubic-b
 ## Responsive rules
 
 Desktop keeps the rail and wide poster compositions. Tablet reduces the rail and grid density. Mobile removes the rail, uses a compact header, turns the discovery reel into a touchable horizontal stage, and removes the precise camera push in favor of a stable poster-led entry.
+
+## Completion states
+
+Library statistics are rendered only from saved local entries. Empty shelves distinguish no saved data from no filter match. Provider-backed film metadata is visually separate from user status and notes. Rating controls expose ten half-star hit targets while preserving the editorial single-line treatment.

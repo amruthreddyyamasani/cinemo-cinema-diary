@@ -23,3 +23,11 @@ Purpose: assess demonstrated recall. The result shows correct answers out of fiv
 ## Settings
 
 Purpose: control theme, account mode, and local data. Destructive clearing is explicit and local. The page does not imply server sync where no provider exists.
+
+## Current screen additions
+
+**Library:** three derived stats, shelf tabs, title filter, sort selector, rating controls, and private review editing from the film modal.
+
+**Home:** recommendation actions are View film, Not for me, and Go wider when a genuinely unfamiliar genre is available.
+
+**Quiz result:** percentage, correct-answer count, restart, and privacy-safe share action. The result explicitly states that knowledge is based on balanced recall rather than watch count.

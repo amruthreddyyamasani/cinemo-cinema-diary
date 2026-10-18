@@ -19,3 +19,7 @@ The Knowledge destination presents five verified questions. The user selects an 
 ## Recovery
 
 Missing posters receive an image failure treatment. Empty shelves explain the next action. Search with no results offers a shorter query suggestion. Video failure falls back to the poster and never blocks discovery. Reduced motion disables the camera push and retains the product bridge.
+
+## Current completion flow
+
+Discover → open detail → mark watched/watchlist/favourite → rate from 0.5 to 5 → write or delete a private note → revisit the filtered and sorted shelf. Home recommendations use saved watched genres, exclude watched and dismissed films, and offer a wider-angle escape hatch. Knowledge rounds shuffle question order and share only the score text, never account data.

@@ -7,3 +7,7 @@ The product goal is to make the first useful action feel immediate while giving 
 The experience principles are: content before chrome; recommendations must explain their evidence; personal data must be real and local to the current user; motion must reveal structure rather than delay it; and every animated surface needs a static, keyboard-accessible equivalent.
 
 The key emotional progression is curiosity, entry, recognition, action, and return. A visitor scrolls into the screen, sees that the screen is actually a door into Cinemo, searches or browses a real film, logs it, and gets a better next choice over time.
+
+## Product-completion update
+
+The current tracker supports watched, watchlist, favourite, half-star ratings, private review notes with deletion, local persistence, shelf filtering/sorting, and derived library statistics. Recommendations now exclude watched and dismissed films, explain genre evidence when available, and expose a wider-angle option. The quiz randomizes rounds, gives an explicit scoring explanation, and offers privacy-safe result sharing. Authentication remains device-local; there is no backend user database in this repository.

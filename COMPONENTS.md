@@ -11,3 +11,7 @@
 `FilmModal`, `Library`, `Discover`, `Quiz`, and `SettingsPage` remain product components rather than animation demos. Their empty, error, and action states are part of their contracts.
 
 The server-side catalogue adapter keeps TMDB credentials in Vercel environment variables. Search/discover responses are paginated and deduplicated; selected TMDB records request a second credits-enriched detail response before replacing incomplete search metadata. The application always shows the TMDB attribution notice and approved logo in its credits area.
+
+## Product completion components
+
+`Library` owns shelf tab, filter, sort, and derived-statistic state. `FilmModal` owns the private review textarea and delete action while persisting through the existing entry updater. `Quiz` creates a shuffled round and uses Web Share or clipboard fallback for a score-only result. Home recommendation actions persist dismissed film IDs locally and use watched genre overlap only as an explanation signal.
