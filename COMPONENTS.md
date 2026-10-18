@@ -9,3 +9,5 @@
 `CountUp` is reserved for the quiz percentage. It observes visibility, animates once, exposes the final value via `aria-label`, and immediately renders the final value when reduced motion is preferred.
 
 `FilmModal`, `Library`, `Discover`, `Quiz`, and `SettingsPage` remain product components rather than animation demos. Their empty, error, and action states are part of their contracts.
+
+The server-side catalogue adapter keeps TMDB credentials in Vercel environment variables. Search/discover responses are paginated and deduplicated; selected TMDB records request a second credits-enriched detail response before replacing incomplete search metadata. The application always shows the TMDB attribution notice and approved logo in its credits area.

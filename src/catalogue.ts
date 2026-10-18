@@ -23,3 +23,11 @@ export async function loadCatalogue(query: string, page: number, filters: { genr
   if (!response.ok) throw new Error(body.error || 'Movie provider is temporarily unavailable.')
   return body as CatalogueResponse
 }
+
+export async function loadFilmDetails(film: Film, signal?: AbortSignal): Promise<Film | null> {
+  if (film.source !== 'TMDB' || !film.id.startsWith('tmdb-')) return film
+  const response = await fetch(`/api/tmdb?id=${encodeURIComponent(film.id)}`, { signal, headers: { Accept: 'application/json' } })
+  const body = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(body.error || 'Movie details are temporarily unavailable.')
+  return body.film || film
+}

@@ -16,6 +16,6 @@ The named Awwwards references were reviewed for technique rather than copied. 01
 
 ## Catalogue upgrade
 
-The product now has an optional server-side TMDB adapter at `api/tmdb.js`. It supports title search, genre/year filters, provider sorting, page-based loading, stable `tmdb-<id>` identifiers, and provider artwork URLs without exposing credentials in the client bundle. The client merges provider pages by stable ID and exposes a manual “Load more films” action. Abortable debounced searches reset page state when query or filters change.
+The product now has an optional server-side TMDB adapter at `api/tmdb.js`. It supports title search, genre/year filters, provider sorting, page-based loading, stable `tmdb-<id>` identifiers, provider artwork URLs, and a detail endpoint that enriches a selected record with runtime, director, cast, language, country, and genres. No credential is exposed in the client bundle. The client merges provider pages by stable ID and exposes a manual “Load more films” action. Abortable debounced searches reset page state when query or filters change.
 
 No TMDB credential is configured in this repository, so the verified runtime uses the eight-record local fallback and labels it as such. This is intentional: the UI does not claim a larger live database when the provider is unavailable. Production deployment should set `TMDB_READ_TOKEN` server-side, review TMDB attribution/terms, and then the same interface will expose the broader provider catalogue.

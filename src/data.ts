@@ -1,5 +1,5 @@
 export type Film = {
-  id: string; title: string; year: number; runtime: number; genres: string[]; director: string; cast: string[]; language: string; country: string; synopsis: string; poster: string; backdrop: string; source: string;
+  id: string; title: string; year: number; runtime: number; genres: string[]; director: string; cast: string[]; language: string; country: string; synopsis: string; poster: string; backdrop: string; source: string; providerId?: string; releaseDate?: string; voteAverage?: number;
 }
 
 export type QuizQuestion = { id: string; question: string; options: string[]; answer: number; explanation: string }
