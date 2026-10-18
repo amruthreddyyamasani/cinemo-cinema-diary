@@ -1,246 +1,54 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import {
-  ArrowRight,
-  Box,
-  ChevronRight,
-  FileArchive,
-  Globe2,
-  Maximize2,
-  ScanSearch,
-  ShieldCheck,
-  Upload,
-  X,
-} from 'lucide-react'
-import { motion } from 'motion/react'
-import { generateFindings, inspectInput } from './analyzer'
-import { scanStages } from './data'
-import type { Finding, InputKind, RenderEvidence, RenderViewport } from './types'
+import { ArrowRight, Bookmark, Check, ChevronRight, CircleHelp, Film, Heart, Info, LogIn, LogOut, Menu, Moon, Play, Search, Settings, Sparkles, Star, Sun, Trophy, UserRound, X } from 'lucide-react'
+import { motion, useReducedMotion } from 'motion/react'
+import { films, getFilm, quizQuestions, type Film as FilmType } from './data'
 import './styles.css'
 
+type Entry = { filmId:string; watched:boolean; watchlist:boolean; favourite:boolean; rating:number; review:string; loggedAt:string }
+type User = { email:string; name:string }
+const read = <T,>(key:string, fallback:T):T => { try { return JSON.parse(localStorage.getItem(key) ?? '') as T } catch { return fallback } }
+const initialEntries:Entry[] = read('cinemo-library', [])
+
 function App() {
-  const [inputKind, setInputKind] = React.useState<InputKind>('url')
-  const [inputValue, setInputValue] = React.useState('')
-  const [uploadedFile, setUploadedFile] = React.useState<File | undefined>()
-  const [selectedFinding, setSelectedFinding] = React.useState<Finding | null>(null)
-  const [findings, setFindings] = React.useState<Finding[]>([])
-  const [started, setStarted] = React.useState(false)
-  const [scanning, setScanning] = React.useState(false)
-  const [error, setError] = React.useState('')
-  const [sourceLabel, setSourceLabel] = React.useState('')
-  const [fileCount, setFileCount] = React.useState(0)
-  const [render, setRender] = React.useState<RenderEvidence | undefined>()
-  const [evidencePreview, setEvidencePreview] = React.useState<{ title: string; screenshot: string } | null>(null)
-  const [selectedViewport, setSelectedViewport] = React.useState<'DESKTOP' | 'TABLET' | 'MOBILE'>('MOBILE')
-
-  const canStart = inputKind === 'zip' ? Boolean(uploadedFile) : inputValue.trim().length > 0
-
-  async function handleStart() {
-    if (!canStart || scanning) return
-    setStarted(true)
-    setScanning(true)
-    setError('')
-    setSelectedFinding(null)
-    setEvidencePreview(null)
-    try {
-      const project = await inspectInput(inputKind, inputValue.trim(), uploadedFile)
-      setFindings(generateFindings(project))
-      setSourceLabel(project.sourceLabel)
-      setFileCount(project.files.length)
-      setRender(project.render)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'TRACE could not read this submission.')
-      setFindings([])
-      setSourceLabel(inputKind === 'zip' ? uploadedFile?.name ?? '' : inputValue.trim())
-      setFileCount(0)
-      setRender(undefined)
-    } finally {
-      setScanning(false)
-    }
-  }
-
-  function reset() {
-    setStarted(false)
-    setSelectedFinding(null)
-    setFindings([])
-    setError('')
-    setSourceLabel('')
-    setFileCount(0)
-    setRender(undefined)
-    setEvidencePreview(null)
-    setSelectedViewport('MOBILE')
-  }
-
-  return (
-    <main className="app-shell">
-      <header className="topbar">
-        <button className="brand" onClick={reset} aria-label="TRACE home">
-          <span className="brand-mark" />
-          <span>TRACE</span>
-        </button>
-        <div className="topbar-meta">
-          <span className="mono">PRODUCT AUTOPSY ENGINE</span>
-          <span className="status-dot" aria-hidden="true" />
-          <span className="mono">0.1</span>
-        </div>
-      </header>
-
-      {!started ? (
-        <section className="landing">
-          <div className="landing-copy">
-            <div className="eyebrow mono">FIND WHERE THE EXPERIENCE WENT WRONG</div>
-            <h1>Don’t redesign it blindly.<br /><span>Trace the failure.</span></h1>
-            <p>Submit a product source and TRACE will inspect the evidence it can actually read: routes, markup, controls, styles, and project configuration.</p>
-          </div>
-
-          <div className="ingest-grid">
-            <div className="ingest-panel">
-              <div className="input-tabs" role="tablist" aria-label="Project input type">
-                <InputTab active={inputKind === 'url'} onClick={() => setInputKind('url')} icon={<Globe2 size={15} />} label="Live URL" />
-                <InputTab active={inputKind === 'zip'} onClick={() => setInputKind('zip')} icon={<FileArchive size={15} />} label="ZIP" />
-                <InputTab active={inputKind === 'github'} onClick={() => setInputKind('github')} icon={<span className="github-mark">GH</span>} label="GitHub" />
-              </div>
-
-              {inputKind === 'zip' ? (
-                <label className="dropzone">
-                  <Upload size={20} />
-                  <span className="dropzone-title">Drop the project archive here</span>
-                  <span className="dropzone-note">ZIP, inspected in your browser</span>
-                  <input type="file" accept=".zip" onChange={(event) => setUploadedFile(event.target.files?.[0])} />
-                  {uploadedFile && <span className="selected-file mono">{uploadedFile.name}</span>}
-                </label>
-              ) : (
-                <div className="url-box">
-                  <label htmlFor="project-input">{inputKind === 'url' ? 'Deployment URL' : 'Repository URL'}</label>
-                  <input id="project-input" value={inputValue} onChange={(event) => setInputValue(event.target.value)} placeholder={inputKind === 'url' ? 'https://your-site.vercel.app' : 'https://github.com/you/project'} />
-                </div>
-              )}
-
-              <button className="primary-action" disabled={!canStart || scanning} onClick={handleStart}>
-                {scanning ? 'Reading submitted evidence' : 'Start autopsy'}
-                {!scanning && <ArrowRight size={17} />}
-              </button>
-            </div>
-
-            <div className="scan-preview" aria-label="TRACE scan sequence">
-              <div className="preview-header"><span className="mono">SCAN PROFILE</span><span className="mono muted">EVIDENCE FIRST</span></div>
-              <div className="stage-list">
-                {scanStages.map((stage, index) => (
-                  <motion.div key={stage.id} className="stage-row" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.035 }}>
-                    <span className="stage-number mono">0{index + 1}</span><span className="stage-name">{stage.label}</span><span className="stage-note">{stage.note}</span>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <ExamplePreview />
-
-          <div className="principles">
-            <div><ShieldCheck size={15} /><span><strong>Evidence over vibes.</strong> Findings cite what was read.</span></div>
-            <div><ScanSearch size={15} /><span><strong>Cause over symptom.</strong> Each issue includes a causal chain.</span></div>
-            <div><Box size={15} /><span><strong>No demo output.</strong> Empty evidence means no finding.</span></div>
-          </div>
-        </section>
-      ) : (
-        <section className="report">
-          <div className="report-header">
-            <div>
-              <div className="eyebrow mono">{scanning ? 'READING SUBMISSION' : 'AUTOPSY COMPLETE'}</div>
-              <h2>{scanning ? 'Inspecting the evidence.' : 'What the source proves.'}</h2>
-              <p>{sourceLabel ? `${sourceLabel} · ${fileCount} readable file${fileCount === 1 ? '' : 's'}` : 'The submitted source is being inspected.'}</p>
-            </div>
-            <button className="ghost-button" onClick={reset}>New scan</button>
-          </div>
-
-          {error ? <div className="report-error" role="alert"><strong>TRACE could not complete this scan.</strong><span>{error}</span><small>Nothing below is inferred from a template. Fix the source or submit another project.</small></div> : scanning ? <div className="empty-report">Parsing source files and checking concrete markup, styles, and project metadata…</div> : (
-            <>
-            {render && (render.available && render.viewports?.length ? <>
-              <AutopsyOverview findings={findings} render={render} />
-              <ResponsiveComparison render={render} findings={findings} selectedViewport={selectedViewport} setSelectedViewport={setSelectedViewport} onOpen={(title, screenshot) => setEvidencePreview({ title, screenshot })} />
-            </> : <div className="render-limitation" role="status"><span className="mono">RENDERED ANALYSIS UNAVAILABLE</span><span>{render.reason ?? 'TRACE could not start a supported browser renderer for this runtime.'}</span><small>Source and accessibility analysis are still shown; no visual findings were inferred.</small></div>)}
-            <div className="report-grid">
-              <aside className="report-side">
-                <div className="metric-block"><span className="mono muted">FINDINGS</span><strong>{String(findings.length).padStart(2, '0')}</strong></div>
-                <div className="metric-block"><span className="mono muted">HIGH + CRITICAL</span><strong>{String(findings.filter((finding) => finding.severity === 'high' || finding.severity === 'critical').length).padStart(2, '0')}</strong></div>
-                <div className="metric-block"><span className="mono muted">FILES READ</span><strong>{String(fileCount).padStart(2, '0')}</strong></div>
-                <div className="trace-chain"><div className="mono muted">FAILURE CHAIN</div><span>Problem</span><ChevronRight size={14} /><span>Evidence</span><ChevronRight size={14} /><span>Cause</span><ChevronRight size={14} /><span>Impact</span><ChevronRight size={14} /><span>Fix</span></div>
-              </aside>
-              <div className="finding-list">
-                {findings.length ? findings.map((finding) => <button key={finding.id} className="finding-row" onClick={() => setSelectedFinding(finding)}><span className="finding-id mono">{finding.id}</span><span className="finding-main"><span className="finding-title">{finding.title}</span><span className="finding-summary">{finding.evidence}</span></span><span className={`severity severity-${finding.severity}`}>{finding.severity}</span><ChevronRight size={18} className="finding-arrow" /></button>) : <div className="empty-report"><strong>No evidence-backed findings.</strong><span>The inspected source did not trigger TRACE’s current checks. This is a clean result with no inferred output.</span></div>}
-              </div>
-            </div>
-            </>)}
-
-          {selectedFinding && <FindingDrawer finding={selectedFinding} onClose={() => setSelectedFinding(null)} onOpen={(title, screenshot) => setEvidencePreview({ title, screenshot })} />}
-          {evidencePreview && <div className="evidence-lightbox" role="dialog" aria-label={evidencePreview.title} onClick={() => setEvidencePreview(null)}><div className="evidence-lightbox-inner" onClick={(event) => event.stopPropagation()}><button className="ghost-button" onClick={() => setEvidencePreview(null)}>Close evidence</button><div className="mono muted">{evidencePreview.title}</div><img src={evidencePreview.screenshot} alt={evidencePreview.title} /></div></div>}
-        </section>
-      )}
-    </main>
-  )
+  const reduceMotion = useReducedMotion()
+  const [page, setPage] = React.useState('home')
+  const [query, setQuery] = React.useState('')
+  const [entries, setEntries] = React.useState<Entry[]>(initialEntries)
+  const [user, setUser] = React.useState<User | null>(read('cinemo-user', null))
+  const [theme, setTheme] = React.useState<'dark'|'light'>(read('cinemo-theme', 'dark'))
+  const [selected, setSelected] = React.useState<FilmType | null>(null)
+  const [authOpen, setAuthOpen] = React.useState(false)
+  const [authMode, setAuthMode] = React.useState<'signin'|'signup'>('signup')
+  const [toast, setToast] = React.useState('')
+  React.useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem('cinemo-theme', JSON.stringify(theme)) }, [theme])
+  React.useEffect(() => { localStorage.setItem('cinemo-library', JSON.stringify(entries)) }, [entries])
+  React.useEffect(() => { if (toast) { const t = window.setTimeout(() => setToast(''), 2600); return () => window.clearTimeout(t) } }, [toast])
+  const updateEntry = (film:FilmType, patch:Partial<Entry>) => setEntries(current => { const found=current.find(e=>e.filmId===film.id); const next={filmId:film.id,watched:false,watchlist:false,favourite:false,rating:0,review:'',loggedAt:new Date().toISOString(),...found,...patch}; return found ? current.map(e=>e.filmId===film.id?next:e) : [...current,next] })
+  const removeEntry = (filmId:string) => setEntries(current=>current.filter(e=>e.filmId!==filmId))
+  const entryFor = (filmId:string) => entries.find(e=>e.filmId===filmId)
+  const watched = entries.filter(e=>e.watched)
+  const results = films.filter(f=>!query.trim() || `${f.title} ${f.director} ${f.genres.join(' ')}`.toLowerCase().includes(query.toLowerCase()))
+  const nav = (next:string) => { setPage(next); setQuery(''); window.scrollTo({top:0,behavior:reduceMotion?'auto':'smooth'}) }
+  return <div className="app"><aside className="rail"><button className="wordmark" onClick={()=>nav('home')} aria-label="Cinemo home"><span className="ticket-mark" />CINEMO</button><div className="rail-nav"><RailButton active={page==='home'} icon={<Film size={17}/>} label="Home" onClick={()=>nav('home')}/><RailButton active={page==='discover'} icon={<Search size={17}/>} label="Discover" onClick={()=>nav('discover')}/><RailButton active={page==='library'} icon={<Bookmark size={17}/>} label="My library" onClick={()=>nav('library')} badge={entries.length}/><RailButton active={page==='quiz'} icon={<Trophy size={17}/>} label="Knowledge" onClick={()=>nav('quiz')}/></div><div className="rail-bottom"><RailButton active={page==='settings'} icon={<Settings size={17}/>} label="Settings" onClick={()=>nav('settings')}/><button className="profile-mini" onClick={()=>{setAuthMode('signin');setAuthOpen(true)}}><span className="avatar">{user?.name?.[0]?.toUpperCase() ?? 'G'}</span><span><b>{user?.name ?? 'Guest mode'}</b><small>{user?'Your diary':'Sign in to sync'}</small></span></button></div></aside><header className="mobile-head"><button className="wordmark" onClick={()=>nav('home')}><span className="ticket-mark"/>CINEMO</button><button className="icon-btn" onClick={()=>setPage(page==='home'?'discover':'home')} aria-label="Open discovery"><Menu size={20}/></button></header><main className="main"><div className="topline"><span className="kicker">{page==='home'?'PERSONAL CINEMA DIARY':page.toUpperCase()}</span><div className="top-actions"><button className="theme-btn" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-label="Toggle theme">{theme==='dark'?<Sun size={16}/>:<Moon size={16}/>}<span>{theme==='dark'?'Light room':'Dark room'}</span></button>{user?<button className="signout" onClick={()=>{setUser(null);localStorage.removeItem('cinemo-user');setToast('Signed out of this device')}} onClickCapture={()=>{}}><LogOut size={15}/> Sign out</button>:<button className="signin" onClick={()=>{setAuthMode('signin');setAuthOpen(true)}}><LogIn size={15}/> Sign in</button>}</div></div>{page==='home'&&<Home user={user} films={films} results={results} query={query} setQuery={setQuery} onSearch={()=>nav('discover')} onOpen={setSelected} entries={entries} updateEntry={updateEntry} nav={nav} reduceMotion={!!reduceMotion}/>} {page==='discover'&&<Discover results={results} query={query} setQuery={setQuery} onOpen={setSelected} entries={entries} updateEntry={updateEntry}/>} {page==='library'&&<Library entries={entries} onOpen={setSelected} removeEntry={removeEntry} updateEntry={updateEntry}/>} {page==='quiz'&&<Quiz/>} {page==='settings'&&<SettingsPage theme={theme} setTheme={setTheme} user={user} entries={entries} setEntries={setEntries}/>}<footer><span>© 2026 Cinemo</span><span>Your movies. Your taste. Your cinema.</span><button onClick={()=>nav('settings')}>Privacy & data</button></footer></main>{selected&&<FilmModal film={selected} entry={entryFor(selected.id)} onClose={()=>setSelected(null)} updateEntry={updateEntry} removeEntry={removeEntry} onToast={setToast}/>} {authOpen&&<AuthModal mode={authMode} onClose={()=>setAuthOpen(false)} onAuth={(next)=>{setUser(next);localStorage.setItem('cinemo-user',JSON.stringify(next));setAuthOpen(false);setToast('Your diary is ready')}}/>}{toast&&<div className="toast" role="status"><Check size={16}/>{toast}</div>}</div>
 }
 
-function InputTab({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
-  return <button type="button" role="tab" aria-selected={active} className={active ? 'input-tab active' : 'input-tab'} onClick={onClick}>{icon}{label}</button>
-}
+function RailButton({active,icon,label,onClick,badge}:{active:boolean;icon:React.ReactNode;label:string;onClick:()=>void;badge?:number}) { return <button className={active?'rail-link active':'rail-link'} onClick={onClick}>{icon}<span>{label}</span>{badge? <em>{badge}</em>:null}</button> }
+function Home({user,films,results,query,setQuery,onSearch,onOpen,entries,updateEntry,nav,reduceMotion}:{user:User|null;films:FilmType[];results:FilmType[];query:string;setQuery:(s:string)=>void;onSearch:()=>void;onOpen:(f:FilmType)=>void;entries:Entry[];updateEntry:(f:FilmType,p:Partial<Entry>)=>void;nav:(s:string)=>void;reduceMotion:boolean}) { const watched=entries.filter(e=>e.watched); const recs=films.filter(f=>!watched.some(e=>e.filmId===f.id)).slice(0,4); return <><section className="hero"><div className="hero-copy"><span className="kicker bronze">THE SCREENING ROOM, PERSONALIZED</span><h1><BlurText text={user?`${user.name}, your taste has a pattern.`:'Your taste. Your cinema.'} reduceMotion={reduceMotion}/></h1><p>Keep a record of the films that stay with you, then find the next one with a little more intention.</p><div className="hero-actions"><button className="primary" onClick={onSearch}>Pick something worth watching <ArrowRight size={17}/></button><button className="text-btn" onClick={()=>nav('quiz')}>Test your cinema knowledge <ChevronRight size={15}/></button></div></div><div className="hero-note"><span className="mono">CINEMO / 001</span><p>For people who know a “quick film” is rarely quick.</p></div></section><section className="search-line"><Search size={18}/><input aria-label="Search films" value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==='Enter'&&onSearch()} placeholder="Search a title, director, or mood"/><span className="mono">⌘ K</span></section><section className="section-block"><SectionHeader eyebrow="CURATED FOR THE CURIOUS" title="A few films to start with" action="See all" onClick={onSearch}/><InfiniteMenu films={films.slice(0,6)} onOpen={onOpen} entries={entries} updateEntry={updateEntry}/></section><section className="home-grid"><div><SectionHeader eyebrow="YOUR DIARY" title={watched.length?'The latest entries':'Your first entry is waiting'} action="Open library" onClick={()=>nav('library')}/>{watched.length?<div className="journal-list">{watched.slice(0,3).map(e=>{const f=getFilm(e.filmId)!;return <JournalRow key={e.filmId} film={f} entry={e} onOpen={onOpen}/>} )}</div>:<div className="empty-note"><Film size={19}/><p>Nothing logged yet. Find a film you watched recently and give your memory somewhere to live.</p><button className="text-btn" onClick={onSearch}>Search the catalog <ArrowRight size={15}/></button></div>}</div><div><SectionHeader eyebrow="A SUSPICIOUSLY SPECIFIC RECOMMENDATION" title="Try a different angle"/><div className="rec-feature">{recs[0]&&<><img src={recs[0].poster} alt={`${recs[0].title} poster`} onError={e=>e.currentTarget.style.opacity='.25'}/><div><span className="mono bronze">{watched.length?'BASED ON YOUR DIARY':'A GOOD PLACE TO BEGIN'}</span><h3>{recs[0].title}</h3><p>{watched.length?`Shares ${recs[0].genres.filter(g=>watched.some(e=>getFilm(e.filmId)?.genres.includes(g))).join(' · ')||recs[0].genres[0]} with films you have enjoyed.`:'A considered starting point, before Cinemo learns your particular obsessions.'}</p><button className="small-btn" onClick={()=>onOpen(recs[0])}>View film <ArrowRight size={14}/></button></div></>}</div></div></section></> }
+function SectionHeader({eyebrow,title,action,onClick}:{eyebrow:string;title:string;action?:string;onClick?:()=>void}){return <div className="section-header"><div><span className="kicker">{eyebrow}</span><h2>{title}</h2></div>{action&&<button className="text-btn" onClick={onClick}>{action} <ChevronRight size={15}/></button>}</div>}
+function BlurText({text,reduceMotion}:{text:string;reduceMotion:boolean}) { return <span className={reduceMotion?'blur-text no-motion':'blur-text'}>{text}</span> }
+function InfiniteMenu({films,onOpen,entries,updateEntry}:{films:FilmType[];onOpen:(f:FilmType)=>void;entries:Entry[];updateEntry:(f:FilmType,p:Partial<Entry>)=>void}) { return <div className="film-strip">{films.map((film,index)=><motion.button key={film.id} className="film-tile" whileHover={{y:-7}} onClick={()=>onOpen(film)}><img src={film.poster} alt={`${film.title} poster`} loading="lazy"/><span className="film-index mono">0{index+1}</span><span className="film-tile-copy"><b>{film.title}</b><small>{film.year} · {film.director}</small></span><span className="tile-action" onClick={e=>{e.stopPropagation();updateEntry(film,{watchlist:!entries.find(x=>x.filmId===film.id)?.watchlist})}}>{entries.find(x=>x.filmId===film.id)?.watchlist?<Check size={14}/>:<Bookmark size={14}/>}</span></motion.button>)}</div> }
+function Discover({results,query,setQuery,onOpen,entries,updateEntry}:{results:FilmType[];query:string;setQuery:(s:string)=>void;onOpen:(f:FilmType)=>void;entries:Entry[];updateEntry:(f:FilmType,p:Partial<Entry>)=>void}){return <><section className="page-intro"><span className="kicker bronze">DISCOVER</span><h1>Find your next <i>favourite</i>.</h1><p>Search the catalog by title, director, or genre. No posters without a reason.</p></section><section className="search-line large"><Search size={18}/><input autoFocus aria-label="Search catalog" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Try “Wong”, “thriller”, or “2001”"/></section><div className="results-head"><span className="mono">{results.length} FILMS IN VIEW</span>{query&&<button className="text-btn" onClick={()=>setQuery('')}>Clear search <X size={14}/></button>}</div>{results.length?<div className="film-grid">{results.map(f=><FilmCard key={f.id} film={f} entry={entries.find(e=>e.filmId===f.id)} onOpen={onOpen} updateEntry={updateEntry}/>)}</div>:<div className="empty-state"><Search size={20}/><h3>No film by that name.</h3><p>Try a director, genre, or a shorter title. The catalog is small by design.</p></div>}</>}
+function FilmCard({film,entry,onOpen,updateEntry}:{film:FilmType;entry?:Entry;onOpen:(f:FilmType)=>void;updateEntry:(f:FilmType,p:Partial<Entry>)=>void}){return <article className="film-card"><button className="poster-btn" onClick={()=>onOpen(film)}><img src={film.poster} alt={`${film.title} poster`} loading="lazy"/><span className="poster-year">{film.year}</span></button><div className="film-card-body"><div><h3>{film.title}</h3><p>{film.genres.join(' · ')}</p></div><button className={entry?.watchlist?'save-btn saved':'save-btn'} aria-label={`Add ${film.title} to watchlist`} onClick={()=>updateEntry(film,{watchlist:!entry?.watchlist})}>{entry?.watchlist?<Check size={16}/>:<Bookmark size={16}/>}</button></div></article>}
+function JournalRow({film,entry,onOpen}:{film:FilmType;entry:Entry;onOpen:(f:FilmType)=>void}){return <button className="journal-row" onClick={()=>onOpen(film)}><img src={film.poster} alt=""/><span><b>{film.title}</b><small>{film.year} · logged {new Date(entry.loggedAt).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</small></span><span className="stars">{entry.rating?`${entry.rating.toFixed(1)} / 5`:'Not rated'}</span><ChevronRight size={16}/></button>}
+function Library({entries,onOpen,removeEntry,updateEntry}:{entries:Entry[];onOpen:(f:FilmType)=>void;removeEntry:(id:string)=>void;updateEntry:(f:FilmType,p:Partial<Entry>)=>void}){const [tab,setTab]=React.useState<'watched'|'watchlist'|'favourites'>('watched');const list=entries.filter(e=>tab==='watched'?e.watched:tab==='watchlist'?e.watchlist:e.favourite);return <><section className="page-intro compact"><span className="kicker bronze">YOUR LIBRARY</span><h1>The films you <i>keep.</i></h1><p>Your diary, without the pressure to have an opinion on everything.</p></section><div className="library-tabs">{(['watched','watchlist','favourites'] as const).map(t=><button key={t} className={tab===t?'selected':''} onClick={()=>setTab(t)}>{t}<span>{entries.filter(e=>t==='watched'?e.watched:t==='watchlist'?e.watchlist:e.favourite).length}</span></button>)}</div>{list.length?<div className="library-list">{list.map(e=>{const film=getFilm(e.filmId);return film?<div className="library-item" key={e.filmId}><JournalRow film={film} entry={e} onOpen={onOpen}/><div className="library-controls">{tab==='watched'&&<Rating value={e.rating} onChange={rating=>updateEntry(film,{rating})}/>}<button className="icon-btn danger" onClick={()=>removeEntry(e.filmId)} aria-label={`Remove ${film.title}`}><X size={15}/></button></div></div>:null})}</div>:<div className="empty-state"><Bookmark size={20}/><h3>This shelf is empty.</h3><p>{tab==='watched'?'Mark a film watched when the credits roll.':tab==='watchlist'?'Save something from Discover for later.':'Favourite the films you would defend in a group chat.'}</p></div>}</>}
+function Rating({value,onChange}:{value:number;onChange:(n:number)=>void}){return <div className="rating" aria-label="Personal rating">{[1,2,3,4,5].map(n=><button key={n} className={value>=n?'on':''} onClick={()=>onChange(value===n?n-.5:n)} aria-label={`${n} stars`}><Star size={15} fill={value>=n?'currentColor':'none'}/></button>)}</div>}
+function FilmModal({film,entry,onClose,updateEntry,removeEntry,onToast}:{film:FilmType;entry?:Entry;onClose:()=>void;updateEntry:(f:FilmType,p:Partial<Entry>)=>void;removeEntry:(id:string)=>void;onToast:(s:string)=>void}){const logged=!!entry;return <div className="modal-backdrop" onClick={onClose}><motion.div className="film-modal" initial={{y:20,opacity:0}} animate={{y:0,opacity:1}} onClick={e=>e.stopPropagation()}><button className="modal-close" onClick={onClose} aria-label="Close film"><X size={19}/></button><div className="modal-hero" style={{backgroundImage:`linear-gradient(90deg,var(--surface) 0%,rgba(18,17,15,.74) 52%,rgba(18,17,15,.18)),url(${film.backdrop})`}}><img src={film.poster} alt={`${film.title} poster`}/><div><span className="kicker bronze">{film.year} · {film.runtime} MIN · {film.source}</span><h2>{film.title}</h2><p>{film.synopsis}</p><div className="meta-line">{film.genres.map(g=><span key={g}>{g}</span>)}</div></div></div><div className="modal-details"><div><span className="mono">DIRECTOR</span><p>{film.director}</p></div><div><span className="mono">CAST</span><p>{film.cast.join(' · ')}</p></div><div><span className="mono">LANGUAGE / COUNTRY</span><p>{film.language} · {film.country}</p></div></div><div className="modal-actions"><button className={entry?.watched?'action-btn active':'action-btn'} onClick={()=>{updateEntry(film,{watched:!entry?.watched});onToast(entry?.watched?'Removed from watched':'Marked as watched')}}>{entry?.watched?<Check size={16}/>:<Play size={16}/>} {entry?.watched?'Watched':'Mark watched'}</button><button className={entry?.watchlist?'action-btn active':'action-btn'} onClick={()=>updateEntry(film,{watchlist:!entry?.watchlist})}>{entry?.watchlist?<Check size={16}/>:<Bookmark size={16}/>} {entry?.watchlist?'On watchlist':'Add to watchlist'}</button><button className={entry?.favourite?'action-btn active':'action-btn'} onClick={()=>updateEntry(film,{favourite:!entry?.favourite})}><Heart size={16} fill={entry?.favourite?'currentColor':'none'}/> Favourite</button></div><div className="personal-note"><div><span className="mono">YOUR TAKE</span><p>{entry?.watched?'You watched this film. Give it a rating so recommendations can learn from it.':'Log it first, then add a rating or note.'}</p></div>{entry?.watched&&<Rating value={entry.rating} onChange={rating=>updateEntry(film,{rating})}/>}</div></motion.div></div>}
+function Quiz(){const [index,setIndex]=React.useState(0);const [picked,setPicked]=React.useState<number|null>(null);const [score,setScore]=React.useState(0);const [done,setDone]=React.useState(false);const q=quizQuestions[index];const submit=()=>{if(picked===null)return;const next=score+(picked===q.answer?1:0);if(index===quizQuestions.length-1){setScore(next);setDone(true);localStorage.setItem('cinemo-last-score',JSON.stringify({score:next,total:quizQuestions.length,at:new Date().toISOString()}))}else{setScore(next);setIndex(index+1);setPicked(null)}};return <><section className="page-intro quiz-intro"><span className="kicker bronze">CINEMA KNOWLEDGE</span><h1>Let’s see what you <i>actually</i> know.</h1><p>Five questions. One score. No trick questions hiding behind a film-bro opinion.</p></section>{done?<div className="quiz-result"><div className="result-score"><span className="mono">FINAL SCORE</span><strong><CountUp value={Math.round(score/quizQuestions.length*100)}/><small>%</small></strong><p>{score>=4?'A very respectable screening-room showing.':score>=3?'You know your way around a cinema.':'A promising start. The syllabus is long.'}</p></div><div className="result-copy"><Trophy size={22}/><h2>{score} of {quizQuestions.length} correct</h2><p>Knowledge here is simply demonstrated recall across a balanced set of film, director, language, and craft questions.</p><button className="primary" onClick={()=>{setIndex(0);setScore(0);setPicked(null);setDone(false)}}>Try another round <ArrowRight size={16}/></button></div></div>:<div className="quiz-card"><div className="quiz-progress"><span className="mono">QUESTION {String(index+1).padStart(2,'0')} / {quizQuestions.length}</span><span className="progress-bar"><i style={{width:`${(index+1)/quizQuestions.length*100}%`}}/></span></div><h2>{q.question}</h2><div className="option-list">{q.options.map((option,i)=><button key={option} className={picked===i?'option picked':''} onClick={()=>setPicked(i)}><span>{String.fromCharCode(65+i)}</span>{option}</button>)}</div>{picked!==null&&<div className="answer-note"><Info size={16}/><p>{picked===q.answer?'Correct. ':`Not quite. ${q.options[q.answer]} is the answer. `}{q.explanation}</p></div>}<button className="primary" disabled={picked===null} onClick={submit}>{index===quizQuestions.length-1?'See my score':'Next question'} <ArrowRight size={16}/></button></div>}
+</>}
+function CountUp({value}:{value:number}){const [display,setDisplay]=React.useState(0);React.useEffect(()=>{const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;if(reduce){setDisplay(value);return}let start=0;const id=window.setInterval(()=>{start+=Math.max(1,Math.ceil(value/12));if(start>=value){setDisplay(value);window.clearInterval(id)}else setDisplay(start)},55);return()=>window.clearInterval(id)},[value]);return <span aria-label={`${value} percent`}>{display}</span>}
+function SettingsPage({theme,setTheme,user,entries,setEntries}:{theme:'dark'|'light';setTheme:(t:'dark'|'light')=>void;user:User|null;entries:Entry[];setEntries:(e:Entry[])=>void}){return <><section className="page-intro compact"><span className="kicker bronze">SETTINGS</span><h1>Make Cinemo <i>yours.</i></h1><p>Small choices for a better screening room.</p></section><div className="settings-list"><Setting title="Appearance" note="Choose the room you want to keep your diary in."><div className="segmented"><button className={theme==='dark'?'selected':''} onClick={()=>setTheme('dark')}><Moon size={15}/> Dark room</button><button className={theme==='light'?'selected':''} onClick={()=>setTheme('light')}><Sun size={15}/> Light room</button></div></Setting><Setting title="Account" note={user?`Signed in as ${user.email}.`:'You are using Cinemo in guest mode.'}>{user?<button className="small-btn" onClick={()=>{localStorage.removeItem('cinemo-user');window.location.reload()}}>Sign out <LogOut size={14}/></button>:<span className="setting-muted">Sign in from the top right to sync later.</span>}</Setting><Setting title="Your data" note={`${entries.length} film${entries.length===1?'':'s'} currently saved on this device.`}><button className="small-btn danger-btn" onClick={()=>{if(window.confirm('Clear your local Cinemo library?'))setEntries([])}}>Clear local library <X size={14}/></button></Setting></div></>}
+function Setting({title,note,children}:{title:string;note:string;children:React.ReactNode}){return <section className="setting-row"><div><h2>{title}</h2><p>{note}</p></div><div>{children}</div></section>}
+function AuthModal({mode,onClose,onAuth}:{mode:'signin'|'signup';onClose:()=>void;onAuth:(u:User)=>void}){const [currentMode,setCurrentMode]=React.useState(mode);const [name,setName]=React.useState('');const [email,setEmail]=React.useState('');const [password,setPassword]=React.useState('');const [error,setError]=React.useState('');const submit=(e:React.FormEvent)=>{e.preventDefault();if(!email.includes('@')||password.length<6){setError('Use a valid email and a password with at least 6 characters.');return}onAuth({email,name:name||email.split('@')[0]})};return <div className="modal-backdrop" onClick={onClose}><div className="auth-modal" onClick={e=>e.stopPropagation()}><button className="modal-close" onClick={onClose}><X size={18}/></button><span className="kicker bronze">{currentMode==='signup'?'JOIN CINEMO':'WELCOME BACK'}</span><h2>{currentMode==='signup'?'Start your film diary.':'Pick up where you left off.'}</h2><p className="auth-note">This demo keeps your account on this device. A hosted account can be connected when a provider is supplied.</p><form onSubmit={submit}>{currentMode==='signup'&&<label>Your name<input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Mira"/></label>}<label>Email<input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"/></label><label>Password<input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="6 characters minimum"/></label>{error&&<div className="form-error">{error}</div>}<button className="primary" type="submit">{currentMode==='signup'?'Create local diary':'Sign in'} <ArrowRight size={16}/></button></form><button className="text-btn auth-switch" onClick={()=>setCurrentMode(currentMode==='signup'?'signin':'signup')}>{currentMode==='signup'?'Already have an account? Sign in':'New here? Create a diary'}</button></div></div>}
 
-function FindingDrawer({ finding, onClose, onOpen }: { finding: Finding; onClose: () => void; onOpen: (title: string, screenshot: string) => void }) {
-  return <motion.aside className="drawer" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} role="dialog" aria-label={finding.title}>
-    <div className="drawer-head"><div><span className="mono muted">{finding.id} / {finding.category} / {finding.severity}</span><h3>{finding.title}</h3></div><button className="icon-button" onClick={onClose} aria-label="Close finding"><X size={18} /></button></div>
-    {finding.severityReason && <div className="severity-reason"><span className="mono">SEVERITY BASIS</span><p>{finding.severityReason}</p></div>}
-    {finding.evidenceRef?.screenshot && <button className="drawer-evidence" onClick={() => onOpen(`${finding.evidenceRef?.route} · ${finding.evidenceRef?.viewport} · ${finding.evidenceRef?.selector ?? 'rendered evidence'}`, finding.evidenceRef?.screenshot ?? '')}><img src={finding.evidenceRef.screenshot} alt="Highlighted rendered evidence" /><span><span className="mono">OPEN HIGHLIGHTED EVIDENCE</span><strong>{finding.evidenceRef.viewport} · {finding.evidenceRef.measurement}</strong></span><Maximize2 size={16} /></button>}
-    <div className="evidence-chain"><span className="mono">OBSERVATION → EVIDENCE → RULE → CORRELATION</span><div><b>{finding.evidenceRef?.selector ?? finding.location}</b><ChevronRight size={13} /><b>{finding.evidenceRef?.measurement ?? 'measured source evidence'}</b><ChevronRight size={13} /><b>{finding.category}</b><ChevronRight size={13} /><b>{finding.severity.toUpperCase()}</b></div></div>
-    {finding.provenance && <div className="provenance-block"><div className="provenance-head"><span className="mono">EVIDENCE PROVENANCE</span><strong>GROUNDED · {finding.provenance.kind.toUpperCase()}</strong></div><div className="provenance-grid"><Detail label="LOCATION" value={finding.provenance.location} />{finding.provenance.sourceFile && <Detail label="SOURCE FILE" value={finding.provenance.sourceFile} />}{finding.provenance.route && <Detail label="ROUTE" value={finding.provenance.route} />}{finding.provenance.viewport && <Detail label="VIEWPORT" value={finding.provenance.viewport} />}{finding.provenance.selector && <Detail label="SELECTOR" value={finding.provenance.selector} />}{finding.provenance.measurement && <Detail label="MEASUREMENT" value={finding.provenance.measurement} />}</div></div>}
-    {finding.assessment && <div className="assessment-block"><div className="assessment-head"><span className="mono">M5 TRIAGE</span><strong>{finding.assessment.triage.toUpperCase()}</strong></div><div className="assessment-grid"><Detail label="VERIFICATION" value={finding.assessment.verification} /><Detail label="BEHAVIOR" value={finding.assessment.behavior} /><Detail label="EVIDENCE STRENGTH" value={finding.assessment.evidenceStrength} /><Detail label="FACT" value={finding.assessment.fact} /><Detail label="INFERENCE" value={finding.assessment.inference} /><Detail label="RECOMMENDATION" value={finding.assessment.recommendation} /><Detail label="TRIAGE BASIS" value={finding.assessment.triageReason} /></div></div>}
-    {finding.correlation && <div className="correlation-chain"><div className="correlation-head"><span className="mono">ROOT-CAUSE CORRELATION</span><strong>CONFIDENCE · {finding.correlation.confidence}</strong></div><Detail label="CORRELATION" value={finding.correlation.correlation} /><Detail label="ROOT CAUSE" value={finding.correlation.rootCause} /><Detail label="AFFECTED ROUTES" value={finding.correlation.affectedRoutes.join(' · ') || 'No repeated route evidence'} /><Detail label="AFFECTED VIEWPORTS" value={finding.correlation.affectedViewports.join(' · ') || 'No repeated viewport evidence'} /><Detail label="OBSERVED COMPONENT VIEWPORTS" value={finding.correlation.observedViewports.join(' · ') || 'No matching selector observed in other viewports'} /></div>}
-    <div className="drawer-sections"><Detail label="PROBLEM" value={finding.problem} /><Detail label="EVIDENCE" value={finding.evidence} /><Detail label="CAUSE" value={finding.cause} /><Detail label="IMPACT" value={finding.impact} /><Detail label="FIX" value={finding.fix} /><Detail label="LOCATION" value={finding.location} /></div>
-  </motion.aside>
-}
-
-function Detail({ label, value }: { label: string; value: string }) { return <section className="detail"><span className="mono muted">{label}</span><p>{value}</p></section> }
-
-function AutopsyOverview({ findings, render }: { findings: Finding[]; render: RenderEvidence }) {
-  const visual = findings.filter((finding) => /responsive|layout|typography|interaction/i.test(finding.category))
-  const count = (value: string) => findings.filter((finding) => finding.severity === value).length
-  const routes = render.routes?.map((route) => route.route) ?? ['/']
-  const viewports = new Set((render.routes ?? []).flatMap((route) => route.viewports.map((viewport) => viewport.id)))
-  return <section className="autopsy-overview" aria-label="Autopsy overview">
-    <div className="overview-head"><div><span className="mono">AUTOPSY OVERVIEW</span><strong>What TRACE measured.</strong></div><span className="renderer-status"><i /> RENDERER READY</span></div>
-    <div className="overview-grid">
-      <OverviewMetric label="ROUTES INSPECTED" value={String(routes.length).padStart(2, '0')} detail={routes.join(' · ')} />
-      <OverviewMetric label="VIEWPORTS" value={String(viewports.size || 3).padStart(2, '0')} detail="1440×900 · 1280×800 · 390×844" />
-      <OverviewMetric label="FINDINGS" value={String(findings.length).padStart(2, '0')} detail="evidence-backed" />
-      <OverviewMetric label="CRITICAL / HIGH" value={`${count('critical')} / ${count('high')}`} detail="severity counts" />
-      <OverviewMetric label="MEDIUM / LOW" value={`${count('medium')} / ${count('low')}`} detail="severity counts" />
-      <OverviewMetric label="VISUAL / RESPONSIVE" value={String(visual.length).padStart(2, '0')} detail="rendered evidence" />
-    </div>
-    <div className="overview-tags"><span className="mono">ANALYSIS CHANNELS</span><span>Accessibility {findings.filter((finding) => /accessibility/i.test(finding.category)).length}</span><span>Responsive/Layout {findings.filter((finding) => /responsive|layout/i.test(finding.category)).length}</span><span>Interaction {findings.filter((finding) => /interaction/i.test(finding.category)).length}</span><span>Typography {findings.filter((finding) => /typography/i.test(finding.category)).length}</span></div>
-    <div className="scan-pipeline">{['INGEST', 'SOURCE ANALYSIS', 'RENDER', 'MEASURE', 'CORRELATE', 'FINDINGS'].map((stage, index) => <React.Fragment key={stage}><span><i />{stage}</span>{index < 5 && <ChevronRight size={13} />}</React.Fragment>)}</div>
-  </section>
-}
-
-function OverviewMetric({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return <div className="overview-metric"><span className="mono muted">{label}</span><strong>{value}</strong><small>{detail}</small></div>
-}
-
-function ResponsiveComparison({ render, findings, selectedViewport, setSelectedViewport, onOpen }: { render: RenderEvidence; findings: Finding[]; selectedViewport: 'DESKTOP' | 'TABLET' | 'MOBILE'; setSelectedViewport: (value: 'DESKTOP' | 'TABLET' | 'MOBILE') => void; onOpen: (title: string, screenshot: string) => void }) {
-  const routes = render.routes?.length ? render.routes : [{ route: '/', viewports: render.viewports ?? [] }]
-  const primary = routes[0]
-  const available = ['DESKTOP', 'TABLET', 'MOBILE'] as const
-  const rendererId = selectedViewport === 'TABLET' ? 'laptop' : selectedViewport.toLowerCase()
-  const viewport = primary.viewports.find((item) => item.id === rendererId) ?? primary.viewports[0]
-  if (!viewport) return null
-  const findingCount = findings.filter((finding) => finding.evidenceRef?.route === primary.route && finding.evidenceRef?.viewport?.startsWith(`${viewport.width}×`)).length
-  return <section className="render-evidence" aria-label="Viewport lab"><div className="render-evidence-head"><div><span className="mono">VIEWPORT LAB</span><strong>Rendered evidence</strong></div><span className="mono muted">{primary.route} · {viewport.width}×{viewport.height}</span></div><div className="route-strip"><span className="mono muted">ROUTES INSPECTED</span>{routes.map((route) => <span key={route.route} className={route.route === primary.route ? 'route-chip active' : 'route-chip'}>{route.route}</span>)}</div><div className="viewport-control" role="tablist" aria-label="Rendered viewport">{available.map((id) => <button key={id} role="tab" aria-selected={id === selectedViewport} className={id === selectedViewport ? 'viewport-control-tab active' : 'viewport-control-tab'} onClick={() => setSelectedViewport(id)}>{id}<small>{primary.viewports.find((item) => item.id === (id === 'TABLET' ? 'laptop' : id.toLowerCase()))?.width ?? '—'}×{primary.viewports.find((item) => item.id === (id === 'TABLET' ? 'laptop' : id.toLowerCase()))?.height ?? '—'}</small></button>)}</div><div className="render-viewport-list single"><ViewportCard viewport={viewport} route={primary.route} findingCount={findingCount} onOpen={onOpen} /></div><div className="viewport-finding-note mono">{findingCount ? `${findingCount} finding${findingCount === 1 ? '' : 's'} linked to ${selectedViewport}` : `No ${selectedViewport.toLowerCase()}-specific findings from the submitted evidence`}</div></section>
-}
-
-
-function ExamplePreview() {
-  return <aside className="example-preview" aria-label="Static example finding preview"><div className="example-label mono">EXAMPLE OUTPUT · NOT A SCAN</div><div className="example-content"><div className="example-shot"><div className="shot-bar" /><div className="shot-copy" /><div className="shot-card"><span>PRIMARY CTA</span><span className="shot-button">BEGIN</span></div><div className="measurement mono">→ +38px overflow</div><div className="measure-line" /></div><div className="example-copy"><span className="mono muted">RESPONSIVE BEHAVIOR · HIGH</span><h3>PRIMARY CTA EXCEEDS MOBILE VIEWPORT</h3><p className="mono">390 × 844</p></div></div></aside>
-}
-
-function ViewportCard({ viewport, route, findingCount, onOpen }: { viewport: RenderViewport; route: string; findingCount: number; onOpen: (title: string, screenshot: string) => void }) {
-  return <button className="render-card" onClick={() => onOpen(`${route} · ${viewport.id} · ${viewport.width}×${viewport.height}`, viewport.screenshot)}><div className="render-card-image"><img src={viewport.screenshot} alt={`${route} ${viewport.id} viewport screenshot`} />{viewport.metrics.horizontalOverflow && <span className="measurement-badge">OVERFLOW +{viewport.metrics.bodyScrollWidth - viewport.width}px</span>}<span className="expand-badge"><Maximize2 size={13} /></span></div><div className="render-card-caption"><span>{viewport.id}</span><span className="mono muted">{viewport.width}×{viewport.height}</span><span className={findingCount ? 'finding-count active' : 'finding-count'}>{findingCount} finding{findingCount === 1 ? '' : 's'}</span></div></button>
-}
-
-ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>)
+ReactDOM.createRoot(document.getElementById('root')!).render(<App />)

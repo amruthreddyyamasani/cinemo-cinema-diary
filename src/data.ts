@@ -1,12 +1,29 @@
-import type { ScanStage } from './types'
+export type Film = {
+  id: string; title: string; year: number; runtime: number; genres: string[]; director: string; cast: string[]; language: string; country: string; synopsis: string; poster: string; backdrop: string; source: string;
+}
 
-export const scanStages: { id: ScanStage; label: string; note: string }[] = [
-  { id: 'source', label: 'Source', note: 'Routes, components, dependencies' },
-  { id: 'structure', label: 'Structure', note: 'Hierarchy, density, composition' },
-  { id: 'interface', label: 'Interface', note: 'Typography, controls, visual grammar' },
-  { id: 'interaction', label: 'Interaction', note: 'Flows, feedback, friction' },
-  { id: 'motion', label: 'Motion', note: 'Timing, purpose, repetition' },
-  { id: 'responsive', label: 'Responsive', note: 'Small-screen behavior' },
-  { id: 'accessibility', label: 'Accessibility', note: 'Contrast, semantics, keyboard' },
-  { id: 'identity', label: 'Identity', note: 'Distinctiveness and cohesion' },
+export type QuizQuestion = { id: string; question: string; options: string[]; answer: number; explanation: string }
+
+const poster = (path: string) => `https://image.tmdb.org/t/p/w500${path}`
+const backdrop = (path: string) => `https://image.tmdb.org/t/p/w1280${path}`
+
+export const films: Film[] = [
+  { id:'godfather', title:'The Godfather', year:1972, runtime:175, genres:['Crime','Drama'], director:'Francis Ford Coppola', cast:['Marlon Brando','Al Pacino','James Caan'], language:'English', country:'United States', synopsis:'The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.', poster:poster('/3bhkrj58Vtu7enYsRolD1fZdja1.jpg'), backdrop:backdrop('/tmU7GeKVybMWFButWEGl2M4GeiP.jpg'), source:'TMDB artwork', },
+  { id:'in-the-mood-for-love', title:'In the Mood for Love', year:2000, runtime:98, genres:['Drama','Romance'], director:'Wong Kar-wai', cast:['Tony Leung Chiu-wai','Maggie Cheung'], language:'Cantonese', country:'Hong Kong', synopsis:'Two neighbors form a strong bond after suspecting their spouses are having an affair.', poster:poster('/iYypPT4bhqXfq1b6EnmxvhtgH8r.jpg'), backdrop:backdrop('/u7kuUaySqXJzczkN2S5gW7yB0cR.jpg'), source:'TMDB artwork', },
+  { id:'parasite', title:'Parasite', year:2019, runtime:133, genres:['Comedy','Thriller','Drama'], director:'Bong Joon-ho', cast:['Song Kang-ho','Lee Sun-kyun','Cho Yeo-jeong'], language:'Korean', country:'South Korea', synopsis:'A struggling family slowly insinuates itself into the home of a wealthy household, with consequences neither family expects.', poster:poster('/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg'), backdrop:backdrop('/TU9NIjwzjoKPwQHoHshkFcQUCG.jpg'), source:'TMDB artwork', },
+  { id:'arrival', title:'Arrival', year:2016, runtime:116, genres:['Drama','Science Fiction'], director:'Denis Villeneuve', cast:['Amy Adams','Jeremy Renner','Forest Whitaker'], language:'English', country:'United States', synopsis:'A linguist works with the military to communicate with alien lifeforms after mysterious spacecraft appear around the world.', poster:poster('/x2FJsf1ElAgr63Y3PNPtJrcmpoe.jpg'), backdrop:backdrop('/9aDijqJ8z3M0f9d3s4c7V7jB7Fh.jpg'), source:'TMDB artwork', },
+  { id:'portrait-of-a-lady-on-fire', title:'Portrait of a Lady on Fire', year:2019, runtime:122, genres:['Drama','Romance'], director:'Céline Sciamma', cast:['Noémie Merlant','Adèle Haenel'], language:'French', country:'France', synopsis:'On an isolated island in Brittany at the end of the eighteenth century, a female painter is obliged to paint a wedding portrait of a young woman.', poster:poster('/2LquGwEhbg3soxScs9V5f3x2bY7.jpg'), backdrop:backdrop('/6Qozh2Gx8m8j4u4R7h7JrYx1JtK.jpg'), source:'TMDB artwork', },
+  { id:'spirited-away', title:'Spirited Away', year:2001, runtime:125, genres:['Animation','Family','Fantasy'], director:'Hayao Miyazaki', cast:['Rumi Hiiragi','Miyu Irino'], language:'Japanese', country:'Japan', synopsis:'A young girl enters a world ruled by gods, witches and spirits where humans are changed into beasts.', poster:poster('/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg'), backdrop:backdrop('/AbCqYfFnZSa1cVTPs7B7X7j8fXz.jpg'), source:'TMDB artwork', },
+  { id:'the-wages-of-fear', title:'The Wages of Fear', year:1953, runtime:131, genres:['Thriller','Adventure'], director:'Henri-Georges Clouzot', cast:['Yves Montand','Charles Vanel'], language:'French', country:'France', synopsis:'Four men are hired to transport two truckloads of nitroglycerine through dangerous terrain.', poster:poster('/m4w0N4Yy0Z6sXJdK8t4h8J9mP1p.jpg'), backdrop:backdrop('/z8VjHf0M9f3bC4D7kX2nQ5rB1sA.jpg'), source:'TMDB artwork', },
+  { id:'moonlight', title:'Moonlight', year:2016, runtime:111, genres:['Drama'], director:'Barry Jenkins', cast:['Mahershala Ali','Trevante Rhodes','Naomie Harris'], language:'English', country:'United States', synopsis:'A young man deals with his dysfunctional home life and comes of age in three defining chapters of his life.', poster:poster('/qAwFbszz0kRyTuXmMeKQZCX3Q2O.jpg'), backdrop:backdrop('/9D5R4kP3g3wB6Qk7sN2vJ8X5cY1.jpg'), source:'TMDB artwork', },
 ]
+
+export const quizQuestions: QuizQuestion[] = [
+  { id:'q1', question:'Who directed Parasite?', options:['Park Chan-wook','Bong Joon-ho','Lee Chang-dong','Hong Sang-soo'], answer:1, explanation:'Bong Joon-ho directed Parasite, which won the 2019 Palme d’Or and Best Picture at the Academy Awards.' },
+  { id:'q2', question:'In which language is In the Mood for Love primarily spoken?', options:['Mandarin','Cantonese','Japanese','Korean'], answer:1, explanation:'Wong Kar-wai’s film is primarily in Cantonese, with small sections in Shanghainese and French.' },
+  { id:'q3', question:'Who composed the score for Spirited Away?', options:['Joe Hisaishi','Ryuichi Sakamoto','Yoko Kanno','Shigeru Umebayashi'], answer:0, explanation:'Joe Hisaishi’s recurring collaboration with Hayao Miyazaki includes the score for Spirited Away.' },
+  { id:'q4', question:'Which film follows a linguist communicating with visitors from another world?', options:['Moonlight','Arrival','The Godfather','Portrait of a Lady on Fire'], answer:1, explanation:'Arrival centers on linguist Louise Banks as she tries to establish communication with alien visitors.' },
+  { id:'q5', question:'Who directed The Godfather?', options:['Martin Scorsese','Francis Ford Coppola','Brian De Palma','Sidney Lumet'], answer:1, explanation:'Francis Ford Coppola directed The Godfather and co-wrote its screenplay with Mario Puzo.' },
+]
+
+export const getFilm = (id: string) => films.find((film) => film.id === id)
