@@ -74,3 +74,7 @@ The sweep looks for:
 - mobile overflow / clipped controls
 
 The rule is simple: **remove anything that looks like it exists because an AI website generator usually adds it.**
+
+## Cinemo cloud persistence
+
+The active Cinemo app supports optional Supabase Auth and PostgreSQL persistence. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`, run the version-controlled migration in [`supabase/migrations/202610190001_cinemo_cloud.sql`](supabase/migrations/202610190001_cinemo_cloud.sql), and follow [`SUPABASE-SETUP.md`](SUPABASE-SETUP.md). When those values are absent, the app clearly remains in guest/local mode; it does not fabricate an authenticated account.

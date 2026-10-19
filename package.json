@@ -17,6 +17,7 @@
     "test:m5": "tsx scripts/test-m5.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
     "@vitejs/plugin-react": "latest",
     "jszip": "^3.10.2",
     "lucide-react": "^1.51.0",
